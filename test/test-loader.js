@@ -560,7 +560,6 @@ exports['test custom require caching'] = function(assert) {
       return require(id);
     }
   });
-  const module = loaders.Module(baseURI, joinURI(baseURI, "main.js"));
   const require = Require(loader, module);
 
   let data = require('fixtures/loader/json/manifest.json');
