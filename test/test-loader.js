@@ -555,32 +555,34 @@ exports['test user global'] = function(assert) {
 exports['test custom require caching'] = function(assert) {
   const loader = Loader({
     paths: { '': root + "/" },
-    require: (require, id) => {
+    require: (id, require) => {
       // Just load it normally
       return require(id);
     }
   });
   const require = Require(loader, module);
 
-  let data = require('fixtures/loader/json/manifest.json');
-  assert.equal(data.version, '1.0.1', 'has initial value');
-  data.version = '2.0.0';
-  let newdata = require('fixtures/loader/json/manifest.json');
-  assert.equal(newdata.version, '2.0.0',
-    'JSON objects returned should be cached and the same instance');
+  let data = require('fixtures/loader/json/test.json');
+  assert.equal(data.filename, 'test.json', 'has initial value');
+  data.filename = 'foo.json';
+  let newdata = require('fixtures/loader/json/test.json');
+  assert.equal(
+    newdata.filename,
+    'foo.json',
+    'JSON objects returned should be cached and the same instance'
+  );
 };
 
-const parentRequire = require;
 
 exports['test proxy require caching'] = function(assert) {
-  // const parentRequire = require;
+  const parentRequire = require;
   const loader = Loader({
     paths: { '': root + "/" },
-    require: (childRequire, id) => {
+    require: (id, childRequire) => {
       dump('JWL CUSTOM REQUIRE, LOADING: ' + id + '\n');
-      if(id === 'manifest') {
+      if(id === 'gimmejson') {
         dump('JWL YEP!\n');
-        return childRequire('fixtures/loader/json/manifest.json')
+        return childRequire('fixtures/loader/json/test.json')
       }
       dump('JWL NOPE\n');
       // Load it with the original (global) require
@@ -589,20 +591,21 @@ exports['test proxy require caching'] = function(assert) {
   });
   const childRequire = Require(loader, module);
 
-  let data = childRequire('./fixtures/loader/json/manifest.json');
-  assert.equal(data.version, '1.0.1', 'data has initial value');
-  data.version = '2.0.0';
-  let newdata = childRequire('./fixtures/loader/json/manifest.json');
-  assert.equal(newdata.version, '2.0.0', 'data has changed');
+  let data = childRequire('./fixtures/loader/json/test.json');
+  assert.equal(data.filename, 'test.json', 'data has initial value');
+  data.filename = 'foo.json';
 
-  data = childRequire('manifest');
-  assert.equal(data.version, '1.0.1', 'second data has initial value');
-  data.version = '3.0.0';
-  newdata = childRequire('manifest');
-  assert.equal(newdata.version, '3.0.0', 'second data has changed');
+  let newdata = childRequire('./fixtures/loader/json/test.json');
+  assert.equal(newdata.filename, 'foo.json', 'data has changed');
+
+  data = childRequire('gimmejson');
+  assert.equal(data.filename, 'test.json', 'second data has initial value');
+  data.filename = 'bar.json';
+  newdata = childRequire('gimmejson');
+  assert.equal(newdata.filename, 'bar.json', 'second data has changed');
 
   data = childRequire('./fixtures/loader/json/manifest.json');
-  assert.equal(newdata.version, '2.0.0', 'still gets cached module from the first load');
+  assert.equal(data.filename, 'foo.json', 'still gets cached module from the first load');
 }
 
 require('sdk/test').run(exports);
