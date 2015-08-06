@@ -562,17 +562,16 @@ exports['test custom require caching'] = function(assert) {
   });
   const require = Require(loader, module);
 
-  let data = require('fixtures/loader/json/test.json');
-  assert.equal(data.filename, 'test.json', 'has initial value');
-  data.filename = 'foo.json';
-  let newdata = require('fixtures/loader/json/test.json');
+  let data = require('fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 1, 'has initial value');
+  data.value = 2;
+  let newdata = require('fixtures/loader/json/mutation.json');
   assert.equal(
-    newdata.filename,
-    'foo.json',
+    newdata.value,
+    2,
     'JSON objects returned should be cached and the same instance'
   );
 };
-
 
 exports['test proxy require caching'] = function(assert) {
   const parentRequire = require;
@@ -582,7 +581,7 @@ exports['test proxy require caching'] = function(assert) {
       dump('JWL CUSTOM REQUIRE, LOADING: ' + id + '\n');
       if(id === 'gimmejson') {
         dump('JWL YEP!\n');
-        return childRequire('fixtures/loader/json/test.json')
+        return childRequire('fixtures/loader/json/mutation.json')
       }
       dump('JWL NOPE\n');
       // Load it with the original (global) require
@@ -591,21 +590,25 @@ exports['test proxy require caching'] = function(assert) {
   });
   const childRequire = Require(loader, module);
 
-  let data = childRequire('./fixtures/loader/json/test.json');
-  assert.equal(data.filename, 'test.json', 'data has initial value');
-  data.filename = 'foo.json';
+  let data = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 1, 'data has initial value');
+  data.value = 2;
 
-  let newdata = childRequire('./fixtures/loader/json/test.json');
-  assert.equal(newdata.filename, 'foo.json', 'data has changed');
+  let newdata = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(newdata.value, 2, 'data has changed');
 
-  data = childRequire('gimmejson');
-  assert.equal(data.filename, 'test.json', 'second data has initial value');
-  data.filename = 'bar.json';
-  newdata = childRequire('gimmejson');
-  assert.equal(newdata.filename, 'bar.json', 'second data has changed');
+  let childData = childRequire('gimmejson');
+  assert.equal(childData.value, 1, 'data from child loader has initial value');
+  childData.value = 3;
+  let newChildData = childRequire('gimmejson');
+  assert.equal(newChildData.value, 3, 'data from child loader has changed');
 
-  data = childRequire('./fixtures/loader/json/manifest.json');
-  assert.equal(data.filename, 'foo.json', 'still gets cached module from the first load');
+  data = childRequire('./fixtures/loader/json/mutation.json');
+  assert.equal(data.value, 2, 'data from parent loader has not changed');
+
+  // Set it back to the original value just in case (this instance
+  // will be shared across tests)
+  data.value = 1;
 }
 
 require('sdk/test').run(exports);
