@@ -552,4 +552,50 @@ exports['test user global'] = function(assert) {
                "user module returns expected `com` global");
 };
 
+exports['test custom require caching'] = function(assert) {
+  const loader = Loader({
+    require: (require, id) => {
+      // Just load it normally
+      return require(id);
+    }
+  });
+  const require = Require(loader, module);
+
+  let data = require('./fixtures/loader/json/manifest.json');
+  assert.equal(data.version, '1.0.1', 'has initial value');
+  data.version = '2.0.0';
+  let newdata = require('./fixtures/loader/json/manifest.json');
+  assert.equal(newdata.version, '2.0.0',
+    'JSON objects returned should be cached and the same instance');
+};
+
+exports['test proxy require caching'] = function(assert) {
+  const parentRequire = require;
+  const loader = Loader({
+    require: (childRequire, id) => {
+      if(id === 'manifest') {
+        return childRequire('./fixtures/loader/json/manifest.json')
+      }
+      // Load it with the original (global) require
+      return parentRequire(id);
+    }
+  });
+  const childRequire = Require(loader, module);
+
+  let data = childRequire('./fixtures/loader/json/manifest.json');
+  assert.equal(data.version, '1.0.1', 'data has initial value');
+  data.version = '2.0.0';
+  let newdata = childRequire('./fixtures/loader/json/manifest.json');
+  assert.equal(newdata.version, '2.0.0', 'data has changed');
+
+  data = childRequire('manifest');
+  assert.equal(data.version, '1.0.1', 'second data has initial value');
+  data.version = '3.0.0';
+  newdata = childRequire('manifest');
+  assert.equal(newdata.version, '3.0.0', 'second data has changed');
+
+  data = childRequire('./fixtures/loader/json/manifest.json');
+  assert.equal(newdata.version, '2.0.0', 'still gets cached module from the first load');
+}
+
 require('sdk/test').run(exports);
