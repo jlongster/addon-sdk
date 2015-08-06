@@ -554,17 +554,19 @@ exports['test user global'] = function(assert) {
 
 exports['test custom require caching'] = function(assert) {
   const loader = Loader({
+    paths: { '': root + "/" },
     require: (require, id) => {
       // Just load it normally
       return require(id);
     }
   });
+  const module = loaders.Module(baseURI, joinURI(baseURI, "main.js"));
   const require = Require(loader, module);
 
-  let data = require('./fixtures/loader/json/manifest.json');
+  let data = require('fixtures/loader/json/manifest.json');
   assert.equal(data.version, '1.0.1', 'has initial value');
   data.version = '2.0.0';
-  let newdata = require('./fixtures/loader/json/manifest.json');
+  let newdata = require('fixtures/loader/json/manifest.json');
   assert.equal(newdata.version, '2.0.0',
     'JSON objects returned should be cached and the same instance');
 };
@@ -572,9 +574,10 @@ exports['test custom require caching'] = function(assert) {
 exports['test proxy require caching'] = function(assert) {
   const parentRequire = require;
   const loader = Loader({
+    paths: { '': root + "/" },
     require: (childRequire, id) => {
       if(id === 'manifest') {
-        return childRequire('./fixtures/loader/json/manifest.json')
+        return childRequire('fixtures/loader/json/manifest.json')
       }
       // Load it with the original (global) require
       return parentRequire(id);
@@ -582,10 +585,10 @@ exports['test proxy require caching'] = function(assert) {
   });
   const childRequire = Require(loader, module);
 
-  let data = childRequire('./fixtures/loader/json/manifest.json');
+  let data = childRequire('fixtures/loader/json/manifest.json');
   assert.equal(data.version, '1.0.1', 'data has initial value');
   data.version = '2.0.0';
-  let newdata = childRequire('./fixtures/loader/json/manifest.json');
+  let newdata = childRequire('fixtures/loader/json/manifest.json');
   assert.equal(newdata.version, '2.0.0', 'data has changed');
 
   data = childRequire('manifest');
@@ -594,7 +597,7 @@ exports['test proxy require caching'] = function(assert) {
   newdata = childRequire('manifest');
   assert.equal(newdata.version, '3.0.0', 'second data has changed');
 
-  data = childRequire('./fixtures/loader/json/manifest.json');
+  data = childRequire('fixtures/loader/json/manifest.json');
   assert.equal(newdata.version, '2.0.0', 'still gets cached module from the first load');
 }
 
