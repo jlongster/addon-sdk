@@ -556,7 +556,6 @@ exports['test custom require caching'] = function(assert) {
   const loader = Loader({
     paths: { '': root + "/" },
     require: (require, id) => {
-      dump('JWL resolved: ' + require.resolve(id) + '\n');
       // Just load it normally
       return require(id);
     }
@@ -590,10 +589,10 @@ exports['test proxy require caching'] = function(assert) {
   });
   const childRequire = Require(loader, module);
 
-  let data = childRequire('fixtures/loader/json/manifest.json');
+  let data = childRequire('./fixtures/loader/json/manifest.json');
   assert.equal(data.version, '1.0.1', 'data has initial value');
   data.version = '2.0.0';
-  let newdata = childRequire('fixtures/loader/json/manifest.json');
+  let newdata = childRequire('./fixtures/loader/json/manifest.json');
   assert.equal(newdata.version, '2.0.0', 'data has changed');
 
   data = childRequire('manifest');
@@ -602,7 +601,7 @@ exports['test proxy require caching'] = function(assert) {
   newdata = childRequire('manifest');
   assert.equal(newdata.version, '3.0.0', 'second data has changed');
 
-  data = childRequire('fixtures/loader/json/manifest.json');
+  data = childRequire('./fixtures/loader/json/manifest.json');
   assert.equal(newdata.version, '2.0.0', 'still gets cached module from the first load');
 }
 
