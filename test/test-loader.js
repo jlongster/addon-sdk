@@ -556,6 +556,7 @@ exports['test custom require caching'] = function(assert) {
   const loader = Loader({
     paths: { '': root + "/" },
     require: (require, id) => {
+      dump('JWL resolved: ' + require.resolve(id) + '\n');
       // Just load it normally
       return require(id);
     }
@@ -570,8 +571,10 @@ exports['test custom require caching'] = function(assert) {
     'JSON objects returned should be cached and the same instance');
 };
 
+const parentRequire = require;
+
 exports['test proxy require caching'] = function(assert) {
-  const parentRequire = require;
+  // const parentRequire = require;
   const loader = Loader({
     paths: { '': root + "/" },
     require: (childRequire, id) => {
