@@ -575,9 +575,12 @@ exports['test proxy require caching'] = function(assert) {
   const loader = Loader({
     paths: { '': root + "/" },
     require: (childRequire, id) => {
+      dump('JWL CUSTOM REQUIRE, LOADING: ' + id + '\n');
       if(id === 'manifest') {
+        dump('JWL YEP!\n');
         return childRequire('fixtures/loader/json/manifest.json')
       }
+      dump('JWL NOPE\n');
       // Load it with the original (global) require
       return parentRequire(id);
     }
